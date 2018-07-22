@@ -22,7 +22,7 @@ def crossSbtDependency(module: ModuleID, sbtVersion: String, scalaVersion: Strin
 }
 
 val aspectjTools = "org.aspectj" % "aspectjtools" % "1.8.13"
-val playSbtPluginFor26 = "com.typesafe.play" % "sbt-plugin" % "2.6.11"
+val playSbtPluginFor26 = "com.typesafe.play" % "sbt-plugin" % "2.6.11" % Provided
 
 
 lazy val sbtAspectjRunner = Project("root", file("."))
@@ -42,6 +42,7 @@ lazy val aspectjRunner = Project("sbt-aspectj-runner", file("sbt-aspectj-runner"
 
 lazy val aspectjRunnerPlay26 = Project("sbt-aspectj-runner-play-26", file("sbt-aspectj-runner-play-2.6"))
   .dependsOn(aspectjRunner)
+  .settings(ScriptedPlugin.scriptedSettings)
   .settings(
     sbtPlugin := true,
     crossSbtVersions := Seq("0.13.17", "1.0.4"),
@@ -49,7 +50,12 @@ lazy val aspectjRunnerPlay26 = Project("sbt-aspectj-runner-play-26", file("sbt-a
     libraryDependencies ++= Seq(
       aspectjTools,
       crossSbtDependency(playSbtPluginFor26, (sbtBinaryVersion in pluginCrossBuild).value, scalaBinaryVersion.value)
-    )
+    ),
+    scriptedLaunchOpts := { scriptedLaunchOpts.value ++
+      Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
+    },
+    scriptedBufferLog := false,
+    publishLocal := (publishLocal dependsOn(publishLocal in aspectjRunner)).value
   )
 
 //workaround for https://github.com/sbt/sbt/issues/3749
